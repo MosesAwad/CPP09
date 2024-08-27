@@ -97,6 +97,8 @@ void BitcoinExchange::extract_values_database()
 
 		// get date
 		std::getline(values_database, date, '|');
+		if (date.empty())
+			continue ;
 		date = trim(date);
 		try {
 			parse_date(date);
@@ -226,7 +228,6 @@ float	parse_rate(std::string& rate)
 	char*		l_endptr;
 	l_result = strtol(rate.c_str(), &l_endptr, 10);
 
-	std::cout << "From within : " << l_result << std::endl;
 	if (l_result > 1000)
 		throw(BitcoinExchange::ValueTooLarge());
 	if (l_result < 0)

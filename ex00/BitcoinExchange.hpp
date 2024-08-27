@@ -13,6 +13,7 @@
 #include <cstring>
 #include <exception>
 #include <limits>
+#include <cmath>
 
 class BitcoinExchange
 {
