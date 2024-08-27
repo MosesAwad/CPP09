@@ -1,6 +1,46 @@
 
 #include "BitcoinExchange.hpp"
 
+const char* BitcoinExchange::InvalidDateFormat::what() const throw()
+{
+	return ("Invalid date format");
+}
+
+const char* BitcoinExchange::AmbigousDate::what() const throw()
+{
+	return ("Ambiguous trailors after date");
+}
+
+const char* BitcoinExchange::DateTooOld::what() const throw()
+{
+	return ("Date too old");
+}
+
+const char* BitcoinExchange::InvalidDate::what() const throw()
+{
+	return ("Invalid date");
+}
+
+const char* BitcoinExchange::MissingRate::what() const throw()
+{
+	return ("Missing rate");
+}
+
+const char* BitcoinExchange::ValueTooLarge::what() const throw()
+{
+	return ("Too large a number");
+}
+
+const char* BitcoinExchange::NegativeValue::what() const throw()
+{
+	return ("Negative value being used");
+}
+
+const char* BitcoinExchange::InvalidRate::what() const throw()
+{
+	return ("Invalid rate");
+}
+
 void    BitcoinExchange::file_handling(const char* filename)
 {
 	std::string str(filename);
@@ -43,52 +83,6 @@ void	BitcoinExchange::extract_rates_database()
 	rates_database.close();
 }
 
-bool	parse_date(std::string& date)
-{
-	struct tm tm;
-
-	memset(&tm, 0, sizeof(tm));
-	char* return_str = strptime(date.c_str(), "%Y-%m-%d", &tm);
-
-	std::map<int, int> daysInMonth;
-
-	daysInMonth[0] = 31;
-	daysInMonth[1] = 28;
-	daysInMonth[2] = 31;
-	daysInMonth[3] = 30;
-	daysInMonth[4] = 31;
-	daysInMonth[5] = 30;
-	daysInMonth[6] = 31;
-	daysInMonth[7] = 31;
-	daysInMonth[8] = 30;
-	daysInMonth[9] = 31;
-	daysInMonth[10] = 30;
-	daysInMonth[11] = 31;
-
-	// Leap year check
-
-	if ((tm.tm_year % 4 == 0 && tm.tm_year % 100 != 0) || (tm.tm_year % 400 == 0))
-        daysInMonth[1] = 29;
-
-	if (return_str == NULL)
-		return (std::cout << "Invalid date format" << std::endl, false);
-
-	if (*return_str != '\0')
-		return (std::cout << "Ambiguous trailors after date" << std::endl, false);
-
-	if (tm.tm_year < 109 || (tm.tm_year == 109 && tm.tm_mon == 0 && tm.tm_mday < 2))
-		return (std::cout << "Date too old" << std::endl, false);
-
-	if ((tm.tm_mon < 0 || tm.tm_mon > 11) || (tm.tm_mday < 1 || tm.tm_mday > 31))
-		return (std::cout << "Invalid date" << std::endl, false);
-	
-	if (tm.tm_mday > daysInMonth[tm.tm_mon])
-		return (std::cout << "Invalid date" << std::endl, false);
-
-	std::cout << tm.tm_year << "-" << tm.tm_mon << "-" << tm.tm_mday << std::endl;
-	return (true);
-}
-
 void BitcoinExchange::extract_values_database()
 {
 
@@ -104,18 +98,30 @@ void BitcoinExchange::extract_values_database()
 		// get date
 		std::getline(values_database, date, '|');
 		date = trim(date);
-		parse_date(date);
-		while (bitrates.find(date) == bitrates.end())
-		{
-			date = trim(get_new_date(date));
-			if (date == "date_too_old")
-				return (std::cerr << "Invalid entry, date too old" << std::endl, void());
+		try {
+			parse_date(date);
 		}
-		std::cout << date << std::endl;
+		catch (std::exception& e) {
+			std::cerr << "Error: " << e.what() << " -> " << date << std::endl;
+			std::getline(values_database, rate);	// To read till the end of the line in case of error
+			continue ;
+		}
+		while (bitrates.find(date) == bitrates.end())
+			date = trim(get_new_date(date));
+		std::cout << "collected date - > " << date << std::endl;
 
 		// get rate
 		std::getline(values_database, rate);
+		rate = trim(rate);
+		try {
+			parse_rate(rate);
+		}
+		catch (std::exception& e) {
+			std::cerr << "Error: " << e.what() << std::endl;
+		}
+		std::cout << "collected rate -> " << rate << std::endl;
 	}
+	values_database.close();
 }
 
 std::string trim(const std::string& str)
@@ -130,9 +136,6 @@ std::string	get_new_date(std::string& date)
 	int year = atoi(date.substr(0, 4).c_str());
 	int month = atoi(date.substr(5, 2).c_str());
 	int day = atoi(date.substr(8, 2).c_str());
-
-	if (year < 2009 || (year == 2009 && month == 1 && day == 1))
-		return ("date_too_old");
 
 	std::ostringstream oss;
 	std::string new_date;
@@ -168,4 +171,78 @@ std::string	get_new_date(std::string& date)
 	oss.clear(); // Clear any flags
 
 	return (new_date);
+}
+
+void	parse_date(std::string& date)
+{
+	struct tm tm;
+
+	memset(&tm, 0, sizeof(tm));
+	char* return_str = strptime(date.c_str(), "%Y-%m-%d", &tm);
+
+	std::map<int, int> daysInMonth;
+
+	daysInMonth[0] = 31;
+	daysInMonth[1] = 28;
+	daysInMonth[2] = 31;
+	daysInMonth[3] = 30;
+	daysInMonth[4] = 31;
+	daysInMonth[5] = 30;
+	daysInMonth[6] = 31;
+	daysInMonth[7] = 31;
+	daysInMonth[8] = 30;
+	daysInMonth[9] = 31;
+	daysInMonth[10] = 30;
+	daysInMonth[11] = 31;
+
+	// Leap year check
+	if ((tm.tm_year % 4 == 0 && tm.tm_year % 100 != 0) || (tm.tm_year % 400 == 0))
+        daysInMonth[1] = 29;
+
+	if (return_str == NULL)
+		throw(BitcoinExchange::InvalidDate());
+
+	if (*return_str != '\0')
+		throw(BitcoinExchange::AmbigousDate());
+
+	if (tm.tm_year < 109 || (tm.tm_year == 109 && tm.tm_mon == 0 && tm.tm_mday < 2))
+		throw(BitcoinExchange::DateTooOld());
+
+	if ((tm.tm_mon < 0 || tm.tm_mon > 11) || (tm.tm_mday < 1 || tm.tm_mday > 31))
+		throw(BitcoinExchange::InvalidDate());
+	
+	if (tm.tm_mday > daysInMonth[tm.tm_mon])
+		throw(BitcoinExchange::InvalidDate());
+
+	// std::cout << tm.tm_year << "-" << tm.tm_mon << "-" << tm.tm_mday << std::endl;
+}
+
+float	parse_rate(std::string& rate)
+{
+	if (rate.empty())
+		throw(BitcoinExchange::MissingRate());
+	
+	long long	l_result;
+	char*		l_endptr;
+	l_result = strtol(rate.c_str(), &l_endptr, 10);
+
+	std::cout << "From within : " << l_result << std::endl;
+	if (l_result > 1000)
+		throw(BitcoinExchange::ValueTooLarge());
+	if (l_result < 0)
+		throw(BitcoinExchange::NegativeValue());
+	if (*l_endptr == '\0')
+		return (l_result);	
+	
+	double		f_result;
+	char*		f_endptr;
+	f_result = strtod(rate.c_str(), &f_endptr);
+	
+	if (f_result > 1000)
+		throw(BitcoinExchange::ValueTooLarge());
+	if (f_result < 0)
+		throw(BitcoinExchange::NegativeValue());
+	if (*f_endptr == '\0')
+		return (static_cast<float>(f_result));
+	throw(BitcoinExchange::InvalidRate());
 }
