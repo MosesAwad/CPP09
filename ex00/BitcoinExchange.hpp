@@ -9,6 +9,8 @@
 #include <cstdlib>
 #include <sstream>
 #include <iomanip> // for setw and setfill
+#include <ctime>
+#include <cstring>
 
 class BitcoinExchange
 {
