@@ -192,6 +192,20 @@ std::string	get_new_date(std::string& date)
 	return (new_date);
 }
 
+BitcoinExchange::BitcoinExchange() {}
+
+BitcoinExchange::BitcoinExchange(const BitcoinExchange& other) {
+	*this = other;	
+}
+
+BitcoinExchange& BitcoinExchange::operator=(const BitcoinExchange& other){
+	if (this != &other)
+		this->bitrates = other.bitrates;
+	return (*this);
+}
+
+BitcoinExchange::~BitcoinExchange() {}
+
 void	parse_date(std::string& date)
 {
 	struct tm tm;

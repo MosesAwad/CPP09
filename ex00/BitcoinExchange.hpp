@@ -18,10 +18,10 @@
 class BitcoinExchange
 {
     private:
-        // BitcoinExchange();
-        // BitcoinExchange(const BitcoinExchange& other);
-        // BitcoinExchange& operator=(const BitcoinExchange& other);
-        // ~BitcoinExchange();
+        BitcoinExchange();
+        BitcoinExchange(const BitcoinExchange& other);
+        BitcoinExchange& operator=(const BitcoinExchange& other);
+        ~BitcoinExchange();
         std::map<std::string, float>    bitrates;
         std::ifstream                   rates_database;
         std::ifstream                   values_database;
