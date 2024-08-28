@@ -1,41 +1,33 @@
 
 #include "PmergeME.hpp"
 
-bool	is_integer(char *str)
-{
-	std::string			string = str;
-	std::stringstream	stream(string);
-	int					value;
-	char				remaining;
-
-	if (stream >> value && !(stream >> remaining))
-		return true;
-	return false;
-}
-
 /*
 	CHANGE TO TEMPLATE FUNCTION LATER CUZ IT WILL BE USED
 	WITH TWO DIFFERENT CONTAINERS
 */
 void	get_entries(std::vector<int>& entries, char *argv[])
 {
-	int	i;
+	int					i;
+	std::string			string;
+	int					value;
+	char				remaining;
 
 	i = 1;	// skip the name of the program
 	while (argv[i]) {
-		if (is_integer(argv[i]) == false)
+		string = argv[i];
+		std::stringstream	stream(string);
+		if (stream >> value && !(stream >> remaining))
+			entries.push_back(value);
+		else
 			throw(InvalidEntry());
-		entries.push_back(atoi(argv[i++]));
+		i++;
 	}
 }
 
 int main(int argc, char *argv[])
 {
 	if (argc < 2)
-	{
-		std::cerr << "Error: not enough arguments" << std::endl;
-		return (1);
-	}
+		return (std::cerr << "Error: not enough arguments" << std::endl, 1);
 
 	std::vector<int> result;
 	try {

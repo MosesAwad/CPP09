@@ -79,13 +79,11 @@ void	BitcoinExchange::extract_rates_database()
 		std::getline(rates_database, rate);
 		bitrates[date] = atof(rate.c_str());
 	}
-
 	rates_database.close();
 }
 
 void BitcoinExchange::extract_values_database()
 {
-
 	std::string header;
 
 	std::getline(values_database, header);

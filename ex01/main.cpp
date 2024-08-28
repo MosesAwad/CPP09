@@ -27,10 +27,8 @@ bool is_integer(const std::string& str) {
 int main(int argc, char *argv[])
 {
 	if (argc != 2)
-	{
-		std::cerr << "Must use strictly 2 arguments" << std::endl;
-		return (1);
-	}
+		return (std::cerr << "Must use strictly 2 arguments" << std::endl, 1);
+
 	std::string 			token_list = argv[1];
 	std::stack<int>			stack;
 	std::istringstream 		stream(token_list);
