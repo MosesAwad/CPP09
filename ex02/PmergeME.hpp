@@ -7,6 +7,7 @@
 #include <vector>
 #include <exception>
 #include <list>
+#include <sys/time.h>
 
 class InvalidEntry : public std::exception
 {
