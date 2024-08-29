@@ -6,6 +6,7 @@
 #include <sstream>
 #include <vector>
 #include <exception>
+#include <list>
 
 class InvalidEntry : public std::exception
 {
