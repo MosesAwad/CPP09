@@ -1,6 +1,48 @@
 
 #include "RPN.hpp"
 
+/*
+	===================================================================
+						   ORTHODOX CANONICAL FORM
+	===================================================================
+*/
+RPN::RPN() {}
+
+RPN::RPN(const RPN& other)
+{
+	*this = other;
+}
+
+
+RPN& RPN::operator=(const RPN& other)
+{
+	if (this != &other)
+	{
+		this->stack = other.stack;
+		this->error_token = other.error_token;
+	}
+	return (*this);
+}
+
+RPN::~RPN() {}
+
+/*
+	===================================================================
+						  		 GETTERS
+	===================================================================
+*/
+std::string&	RPN::getErrorToken()
+{
+	if (error_token.empty())
+		std::cout << "No errors present" << std::endl;
+	return (error_token);
+}
+
+/*
+	===================================================================
+								EXCEPTIONS
+	===================================================================
+*/
 const char*	RPN::InvalidEntryOption::what() const throw()
 {
 	return ("Invalid entry option -> ");
@@ -11,6 +53,11 @@ const char*	RPN::InvalidRPNOperation::what() const throw()
 	return ("Invalid RPN operation");
 }
 
+/*
+	===================================================================
+								PARSE INPUT
+	===================================================================
+*/
 static bool	is_op(std::string& str)
 {
 	std::string operations = "+-/*";
@@ -31,13 +78,11 @@ static bool is_integer(const std::string& str) {
     return false;
 }
 
-std::string&	RPN::getErrorToken()
-{
-	if (error_token.empty())
-		std::cout << "No errors present" << std::endl;
-	return (error_token);
-}
-
+/*
+	===================================================================
+							RPN CALCULATE
+	===================================================================
+*/
 void	RPN::calculate(char *argv[])
 {
 
@@ -77,23 +122,3 @@ void	RPN::calculate(char *argv[])
 
 	std::cout << stack.top() << std::endl;
 }
-
-RPN::RPN() {}
-
-RPN::RPN(const RPN& other)
-{
-	*this = other;
-}
-
-
-RPN& RPN::operator=(const RPN& other)
-{
-	if (this != &other)
-	{
-		this->stack = other.stack;
-		this->error_token = other.error_token;
-	}
-	return (*this);
-}
-
-RPN::~RPN() {}

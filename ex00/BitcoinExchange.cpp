@@ -1,6 +1,30 @@
 
 #include "BitcoinExchange.hpp"
 
+/*
+	===================================================================
+						   ORTHODOX CANONICAL FORM
+	===================================================================
+*/
+BitcoinExchange::BitcoinExchange() {}
+
+BitcoinExchange::BitcoinExchange(const BitcoinExchange& other) {
+	*this = other;	
+}
+
+BitcoinExchange& BitcoinExchange::operator=(const BitcoinExchange& other){
+	if (this != &other)
+		this->bitrates = other.bitrates;
+	return (*this);
+}
+
+BitcoinExchange::~BitcoinExchange() {}
+
+/*
+	===================================================================
+								EXCEPTIONS
+	===================================================================
+*/
 const char* BitcoinExchange::InvalidDateFormat::what() const throw()
 {
 	return ("Invalid date format");
@@ -41,6 +65,11 @@ const char* BitcoinExchange::InvalidRate::what() const throw()
 	return ("Invalid rate");
 }
 
+/*
+	===================================================================
+								FILE HANDLING
+	===================================================================
+*/
 void    BitcoinExchange::file_handling(const char* filename)
 {
 	std::string str(filename);
@@ -64,6 +93,135 @@ void    BitcoinExchange::file_handling(const char* filename)
 
 }
 
+/*
+	===================================================================
+								PARSE INPUT
+	===================================================================
+*/
+void	parse_date(std::string& date)
+{
+	struct tm tm;
+	memset(&tm, 0, sizeof(tm));
+
+	std::map<int, int> daysInMonth;
+	daysInMonth[0] = 31;
+	daysInMonth[1] = 28;
+	daysInMonth[2] = 31;
+	daysInMonth[3] = 30;
+	daysInMonth[4] = 31;
+	daysInMonth[5] = 30;
+	daysInMonth[6] = 31;
+	daysInMonth[7] = 31;
+	daysInMonth[8] = 30;
+	daysInMonth[9] = 31;
+	daysInMonth[10] = 30;
+	daysInMonth[11] = 31;
+
+	// Leap year check
+	char* return_str = strptime(date.c_str(), "%Y-%m-%d", &tm);
+
+	if ((tm.tm_year % 4 == 0 && tm.tm_year % 100 != 0) || (tm.tm_year % 400 == 0))
+        daysInMonth[1] = 29;
+	if (return_str == NULL)
+		throw(BitcoinExchange::InvalidDate());
+	if (*return_str != '\0')
+		throw(BitcoinExchange::AmbigousDate());
+	if (tm.tm_year < 109 || (tm.tm_year == 109 && tm.tm_mon == 0 && tm.tm_mday < 2))
+		throw(BitcoinExchange::DateTooOld());
+	if ((tm.tm_mon < 0 || tm.tm_mon > 11) || (tm.tm_mday < 1 || tm.tm_mday > 31))
+		throw(BitcoinExchange::InvalidDate());
+	if (tm.tm_mday > daysInMonth[tm.tm_mon])
+		throw(BitcoinExchange::InvalidDate());
+}
+
+float	parse_rate(std::string& rate)
+{
+	if (rate.empty())
+		throw(BitcoinExchange::MissingRate());
+	
+	long long	l_result;
+	char*		l_endptr;
+	l_result = strtol(rate.c_str(), &l_endptr, 10);
+
+	if (l_result > 1000)
+		throw(BitcoinExchange::ValueTooLarge());
+	if (l_result < 0)
+		throw(BitcoinExchange::NegativeValue());
+	if (*l_endptr == '\0')
+		return (l_result);	
+	
+	double		f_result;
+	char*		f_endptr;
+	f_result = strtod(rate.c_str(), &f_endptr);
+	
+	if (f_result > 1000)
+		throw(BitcoinExchange::ValueTooLarge());
+	if (f_result < 0)
+		throw(BitcoinExchange::NegativeValue());
+	if (*f_endptr == '\0')
+		return (static_cast<float>(f_result));
+	throw(BitcoinExchange::InvalidRate());
+}
+
+/*
+	===================================================================
+							 HELPER FUNCTIONS
+	===================================================================
+*/
+std::string trim(const std::string& str)
+{
+	size_t first = str.find_first_not_of(" \t\n\r\f\v");
+	size_t last = str.find_last_not_of(" \t\n\r\f\v");
+	return (first == std::string::npos || last == std::string::npos) ? "" : str.substr(first, last - first + 1);
+}
+
+std::string	get_new_date(std::string& date)
+{
+	int year = atoi(date.substr(0, 4).c_str());
+	int month = atoi(date.substr(5, 2).c_str());
+	int day = atoi(date.substr(8, 2).c_str());
+
+	std::ostringstream oss;
+	std::string new_date;
+	if (day > 1)
+		day--;
+	else
+	{
+		day = 31;
+		if (month > 1)
+			month--;
+		else
+		{
+			day = 31;
+			month = 12;
+			year--;
+		}
+	}
+	oss << year;
+	new_date = oss.str();
+	oss.str(""); // Clear the stream
+	oss.clear(); // Clear any flags
+	
+	new_date += '-';
+	oss << std::setw(2) << std::setfill('0') << month;
+	new_date += oss.str();
+	oss.str(""); // Clear the stream
+	oss.clear(); // Clear any flags
+
+	new_date += '-';
+	oss << std::setw(2) << std::setfill('0') << day;
+	new_date += oss.str();
+	oss.str(""); // Clear the stream
+	oss.clear(); // Clear any flags
+
+	return (new_date);
+}
+
+/*
+	===================================================================
+							DATABASE HANDLING
+	===================================================================
+*/
 void	BitcoinExchange::extract_rates_database()
 {
 	std::string	header;
@@ -139,132 +297,4 @@ void BitcoinExchange::extract_values_database()
 				<< f_rate * bitrates[date] << std::endl;
 	}
 	values_database.close();
-}
-
-std::string trim(const std::string& str)
-{
-	size_t first = str.find_first_not_of(" \t\n\r\f\v");
-	size_t last = str.find_last_not_of(" \t\n\r\f\v");
-	return (first == std::string::npos || last == std::string::npos) ? "" : str.substr(first, last - first + 1);
-}
-
-std::string	get_new_date(std::string& date)
-{
-	int year = atoi(date.substr(0, 4).c_str());
-	int month = atoi(date.substr(5, 2).c_str());
-	int day = atoi(date.substr(8, 2).c_str());
-
-	std::ostringstream oss;
-	std::string new_date;
-	if (day > 1)
-		day--;
-	else
-	{
-		day = 31;
-		if (month > 1)
-			month--;
-		else
-		{
-			day = 31;
-			month = 12;
-			year--;
-		}
-	}
-	oss << year;
-	new_date = oss.str();
-	oss.str(""); // Clear the stream
-	oss.clear(); // Clear any flags
-	
-	new_date += '-';
-	oss << std::setw(2) << std::setfill('0') << month;
-	new_date += oss.str();
-	oss.str(""); // Clear the stream
-	oss.clear(); // Clear any flags
-
-	new_date += '-';
-	oss << std::setw(2) << std::setfill('0') << day;
-	new_date += oss.str();
-	oss.str(""); // Clear the stream
-	oss.clear(); // Clear any flags
-
-	return (new_date);
-}
-
-BitcoinExchange::BitcoinExchange() {}
-
-BitcoinExchange::BitcoinExchange(const BitcoinExchange& other) {
-	*this = other;	
-}
-
-BitcoinExchange& BitcoinExchange::operator=(const BitcoinExchange& other){
-	if (this != &other)
-		this->bitrates = other.bitrates;
-	return (*this);
-}
-
-BitcoinExchange::~BitcoinExchange() {}
-
-void	parse_date(std::string& date)
-{
-	struct tm tm;
-	memset(&tm, 0, sizeof(tm));
-
-	std::map<int, int> daysInMonth;
-	daysInMonth[0] = 31;
-	daysInMonth[1] = 28;
-	daysInMonth[2] = 31;
-	daysInMonth[3] = 30;
-	daysInMonth[4] = 31;
-	daysInMonth[5] = 30;
-	daysInMonth[6] = 31;
-	daysInMonth[7] = 31;
-	daysInMonth[8] = 30;
-	daysInMonth[9] = 31;
-	daysInMonth[10] = 30;
-	daysInMonth[11] = 31;
-
-	// Leap year check
-	char* return_str = strptime(date.c_str(), "%Y-%m-%d", &tm);
-
-	if ((tm.tm_year % 4 == 0 && tm.tm_year % 100 != 0) || (tm.tm_year % 400 == 0))
-        daysInMonth[1] = 29;
-	if (return_str == NULL)
-		throw(BitcoinExchange::InvalidDate());
-	if (*return_str != '\0')
-		throw(BitcoinExchange::AmbigousDate());
-	if (tm.tm_year < 109 || (tm.tm_year == 109 && tm.tm_mon == 0 && tm.tm_mday < 2))
-		throw(BitcoinExchange::DateTooOld());
-	if ((tm.tm_mon < 0 || tm.tm_mon > 11) || (tm.tm_mday < 1 || tm.tm_mday > 31))
-		throw(BitcoinExchange::InvalidDate());
-	if (tm.tm_mday > daysInMonth[tm.tm_mon])
-		throw(BitcoinExchange::InvalidDate());
-}
-
-float	parse_rate(std::string& rate)
-{
-	if (rate.empty())
-		throw(BitcoinExchange::MissingRate());
-	
-	long long	l_result;
-	char*		l_endptr;
-	l_result = strtol(rate.c_str(), &l_endptr, 10);
-
-	if (l_result > 1000)
-		throw(BitcoinExchange::ValueTooLarge());
-	if (l_result < 0)
-		throw(BitcoinExchange::NegativeValue());
-	if (*l_endptr == '\0')
-		return (l_result);	
-	
-	double		f_result;
-	char*		f_endptr;
-	f_result = strtod(rate.c_str(), &f_endptr);
-	
-	if (f_result > 1000)
-		throw(BitcoinExchange::ValueTooLarge());
-	if (f_result < 0)
-		throw(BitcoinExchange::NegativeValue());
-	if (*f_endptr == '\0')
-		return (static_cast<float>(f_result));
-	throw(BitcoinExchange::InvalidRate());
 }

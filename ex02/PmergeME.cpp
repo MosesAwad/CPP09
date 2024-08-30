@@ -1,11 +1,45 @@
 
 #include "PmergeME.hpp"
 
+
+/*
+	===================================================================
+						   ORTHODOX CANONICAL FORM
+	===================================================================
+*/
+PmergeMe::PmergeMe() {}
+
+PmergeMe::PmergeMe(const PmergeMe& other)
+{
+	*this = other;
+}
+
+PmergeMe& PmergeMe::operator=(const PmergeMe& other)
+{
+	if (this != &other) {
+		this->vector = other.vector;
+		this->list = other.list;
+	}
+	return (*this);
+}
+
+/*
+	===================================================================
+								EXCEPTIONS
+	===================================================================
+*/
+PmergeMe::~PmergeMe() {}
+
 const char*	PmergeMe::InvalidEntry::what() const throw()
 {
 	return ("Invalid Entry");
 }
 
+/*
+	===================================================================
+								PARSE INPUT
+	===================================================================
+*/
 void	PmergeMe::get_entries(char* argv[])
 {
 	int				i;
@@ -30,6 +64,10 @@ void	PmergeMe::get_entries(char* argv[])
 }
 
 /*
+	===================================================================
+						MERGE INSERT SORT ALGORITHM
+	===================================================================
+
 	I decided to use the same function (a template function) to 
 	do merge insert sort on both the std::vector and the std::list 
 	containers. So, if the function looks a bit complicated, you 
@@ -97,6 +135,12 @@ Container	PmergeMe::merge_insert_sort(Container& container)
     return larger_elements;
 }
 
+/*
+	===================================================================
+					SORT AND DISPLAY FUNCTION ALONG
+						WITH HELPER FUNCTIONS
+	===================================================================
+*/
 static size_t	get_time(void)
 {
 	struct timeval tv;
@@ -142,24 +186,12 @@ void	PmergeMe::sort_and_display()
 		<< " us" << std::endl;
 }
 
-PmergeMe::PmergeMe() {}
-
-PmergeMe::PmergeMe(const PmergeMe& other)
-{
-	*this = other;
-}
-
-PmergeMe& PmergeMe::operator=(const PmergeMe& other)
-{
-	if (this != &other) {
-		this->vector = other.vector;
-		this->list = other.list;
-	}
-	return (*this);
-}
-
-PmergeMe::~PmergeMe() {}
-
+/*
+	===================================================================
+				OLD PROTOTYPE MERGE INSERT SORT FUNCTION THAT
+					WORKS BUT ONLY WITH STD::VECTOR
+	===================================================================
+*/
 /*
 	std::vector<int>	merge_insert_sort(std::vector<int>& vector)
 	{
@@ -202,4 +234,3 @@ PmergeMe::~PmergeMe() {}
 		return larger_elements;
 	}
 */
-
