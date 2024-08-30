@@ -103,6 +103,8 @@ void	RPN::calculate(char *argv[])
 			int result;
 			int store;
 
+			if (stack.size() < 2)
+				throw(InvalidRPNOperation());
 			store = stack.top();
 			stack.pop();
 			if (token == "*")
