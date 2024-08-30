@@ -40,35 +40,43 @@ class BitcoinExchange
 };
 
 class BitcoinExchange::InvalidDateFormat : public std::exception {
-    const char* what() const throw();
+    public:
+        const char* what() const throw();
 };
 
 class BitcoinExchange::AmbigousDate : public std::exception {
-    const char* what() const throw();
+    public:
+        const char* what() const throw();
 };
 
 class BitcoinExchange::DateTooOld : public std::exception {
-    const char* what() const throw();
+    public:
+        const char* what() const throw();
 };
 
 class BitcoinExchange::InvalidDate : public std::exception {
-    const char* what() const throw();
+    public:
+        const char* what() const throw();
 };
 
 class BitcoinExchange::MissingRate : public std::exception {
-    const char* what() const throw();
+    public:
+        const char* what() const throw();
 };
 
 class BitcoinExchange::ValueTooLarge : public std::exception {
-    const char* what() const throw();
+    public:
+        const char* what() const throw();
 };
 
 class BitcoinExchange::NegativeValue : public std::exception {
-    const char* what() const throw();
+    public:
+        const char* what() const throw();
 };
 
 class BitcoinExchange::InvalidRate : public std::exception {
-    const char* what() const throw();
+    public:
+        const char* what() const throw();
 };
 
 std::string trim(const std::string& str);

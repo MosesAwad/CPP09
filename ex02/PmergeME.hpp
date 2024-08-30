@@ -27,7 +27,8 @@ class PmergeMe
 
 class PmergeMe::InvalidEntry : public std::exception
 {
-	const char*	what() const throw();
+	public:
+		const char*	what() const throw();
 };
 
 #endif
